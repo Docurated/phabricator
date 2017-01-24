@@ -314,12 +314,23 @@ final class DifferentialRevisionReviewersTransaction
     $config_self_accept_key = 'differential.allow-self-accept';
     $allow_self_accept = PhabricatorEnv::getEnvConfig($config_self_accept_key);
 
+    $blocking_reviewers = array();
+    foreach ($object->getReviewerStatus() as $reviewer) {
+        $reviewer_status = $reviewer->getStatus();
+        switch ($reviewer_status) {
+        case DifferentialReviewerStatus::STATUS_BLOCKING:
+            $blocking_reviewers[] = $reviewer->getReviewerPHID();
+            break;
+        }
+    }
+
     $old = $this->generateOldValue($object);
     foreach ($xactions as $xaction) {
       $new = $this->generateNewValue($object, $xaction->getNewValue());
 
       $add = array_diff_key($new, $old);
-      if (!$add) {
+      $remove = array_diff_key($old, $new);
+      if (!$add && !$remove) {
         continue;
       }
 
@@ -365,6 +376,19 @@ final class DifferentialRevisionReviewersTransaction
             continue;
           }
         }
+      }
+
+      foreach ($remove as $phid => $status) {
+          $is_blocking_reviewer = in_array($phid, $blocking_reviewers);
+          $is_self = ($phid === $actor->getPHID());
+          $is_admin = $actor->getIsAdmin();
+          if($is_blocking_reviewer &&
+             !($is_self || $is_admin)) {
+              $errors[] = $this->newInvalidError(
+                  pht('Blocking reviewers can only be removed by the reviewer.'),
+                  $xaction);
+              continue;
+          }
       }
     }
 
