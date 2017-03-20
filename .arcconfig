@@ -1,5 +1,5 @@
 {
-  "phabricator.uri": "https://secure.phabricator.com/",
+  "phabricator.uri": "https://phabricator.docurated.rocks/",
   "load": ["src/"],
   "history.immutable": false
 }

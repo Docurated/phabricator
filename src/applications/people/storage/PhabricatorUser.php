@@ -30,6 +30,8 @@ final class PhabricatorUser
   protected $passwordSalt;
   protected $passwordHash;
   protected $profileImagePHID;
+  protected $defaultProfileImagePHID;
+  protected $defaultProfileImageVersion;
   protected $availabilityCache;
   protected $availabilityCacheTTL;
 
@@ -227,6 +229,8 @@ final class PhabricatorUser
         'isEnrolledInMultiFactor' => 'bool',
         'availabilityCache' => 'text255?',
         'availabilityCacheTTL' => 'uint32?',
+        'defaultProfileImagePHID' => 'phid?',
+        'defaultProfileImageVersion' => 'text64?',
       ),
       self::CONFIG_KEY_SCHEMA => array(
         'key_phid' => null,
@@ -842,6 +846,11 @@ final class PhabricatorUser
   public function getUnreadMessageCount() {
     $message_key = PhabricatorUserMessageCountCacheType::KEY_COUNT;
     return $this->requireCacheData($message_key);
+  }
+
+  public function getRecentBadgeAwards() {
+    $badges_key = PhabricatorUserBadgesCacheType::KEY_BADGES;
+    return $this->requireCacheData($badges_key);
   }
 
   public function getFullName() {
